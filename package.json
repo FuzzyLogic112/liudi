@@ -1,0 +1,36 @@
+{
+  "name": "liudi",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "留底 · 本地优先的消费售后材料整理器",
+  "scripts": {
+    "dev": "vite --host 127.0.0.1",
+    "build": "tsc -b && vite build",
+    "preview": "vite preview --host 127.0.0.1",
+    "test": "vitest run",
+    "check": "npm run test && npm run build"
+  },
+  "dependencies": {
+    "fflate": "^0.8.2",
+    "idb": "^8.0.3",
+    "lucide-react": "^0.468.0",
+    "react": "^19.3.0",
+    "react-dom": "^19.3.0",
+    "zod": "^4.1.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "@vitejs/plugin-react": "^5.0.0",
+    "fake-indexeddb": "^6.0.0",
+    "prettier": "^3.9.9",
+    "typescript": "~5.9.3",
+    "vite": "^8.3.1",
+    "vitest": "^4.0.0"
+  },
+  "engines": {
+    "node": ">=20.19.0"
+  }
+}
