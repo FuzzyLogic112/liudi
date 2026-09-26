@@ -15,8 +15,8 @@ export function archivePathLimit(name: string): number {
 }
 
 /**
- * Inspect central and local headers before invoking the inflater. This accepts
- * the bounded, single-volume ZIP format written by this app, without ZIP64,
+ * Inspect central and local headers before reading entries. This accepts
+ * the bounded, STORE-only, single-volume ZIP format written by this app, without ZIP64,
  * encrypted entries, data descriptors, hidden entries or duplicate paths.
  */
 export function unzipChecked(
@@ -72,8 +72,8 @@ export function unzipChecked(
       u16(cursor + 34) !== 0
     )
       throw new Error("ZIP 文件名或分卷异常");
-    if ((flags & ~0x800) !== 0 || (method !== 0 && method !== 8))
-      throw new Error("不支持加密或特殊压缩的 ZIP");
+    if ((flags & ~0x800) !== 0 || method !== 0)
+      throw new Error("请使用留底导出的原始备份，不支持加密或重新压缩的 ZIP");
     // Generated archives require no extra fields; refusing them also excludes ZIP64.
     if (extraLength || commentLength) throw new Error("不支持带扩展字段的 ZIP");
     const name = decoder.decode(
@@ -85,7 +85,7 @@ export function unzipChecked(
     if (
       originalSize > limit ||
       size > MAX_ARCHIVE_SIZE ||
-      (method === 0 && size !== originalSize)
+      size !== originalSize
     )
       throw new Error("备份解压大小超过限制或头部不一致");
     total += originalSize;

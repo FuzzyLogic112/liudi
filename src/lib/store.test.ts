@@ -16,6 +16,7 @@ import {
   updateCaseMeta,
 } from "./store";
 import { isValidDate, validateCase } from "./validation";
+import { caseFormChanges } from "./case-form";
 
 const now = "2026-09-26T08:00:00.000Z";
 function makeCase(): CaseRecord {
@@ -34,6 +35,29 @@ function makeCase(): CaseRecord {
     events: [],
     checklist: [],
   };
+}
+
+function atTextLimit(input: CaseRecord): CaseRecord {
+  const record = {
+    ...input,
+    events: Array.from({ length: 53 }, () => ({
+      id: crypto.randomUUID(),
+      date: "",
+      title: "e",
+      description: "",
+      attachmentIds: [],
+    })),
+  };
+  const size = () => new TextEncoder().encode(JSON.stringify(record)).length;
+  let remaining = 1024 * 1024 - size();
+  for (const event of record.events) {
+    const length = Math.min(20_000, remaining);
+    event.description = "x".repeat(length);
+    remaining -= length;
+  }
+  expect(remaining).toBe(0);
+  expect(size()).toBe(1024 * 1024);
+  return record;
 }
 
 beforeEach(async () => {
@@ -140,6 +164,61 @@ describe("local case transactions", () => {
       "事项不存在",
     );
     expect(await listCases()).toEqual([]);
+  });
+
+  it("preserves another tab's merchant edit when a stale form changes only the goal", async () => {
+    const openingSnapshot = makeCase();
+    await saveCase(openingSnapshot);
+    vi.resetModules();
+    const secondWindow = await import("./store");
+    await secondWindow.updateCaseMeta(openingSnapshot.id, {
+      merchant: "另一窗口更新的商家",
+    });
+    await updateCaseMeta(
+      openingSnapshot.id,
+      caseFormChanges(openingSnapshot, {
+        ...openingSnapshot,
+        goal: "本窗口更新的期望",
+      }),
+    );
+    const { record } = await getCaseSnapshot(openingSnapshot.id);
+    expect(record.merchant).toBe("另一窗口更新的商家");
+    expect(record.goal).toBe("本窗口更新的期望");
+  });
+
+  it("includes cleared form fields and excludes unchanged normalized values and non-form fields", () => {
+    const openingSnapshot = { ...makeCase(), merchant: " 示例商店 " };
+    expect(
+      caseFormChanges(openingSnapshot, {
+        ...openingSnapshot,
+        merchant: "示例商店",
+        goal: "",
+        status: "resolved",
+        checklist: ["交易凭证"],
+        updatedAt: "2026-09-27T08:00:00.000Z",
+      }),
+    ).toEqual({ goal: "" });
+  });
+
+  it("rejects metadata that exceeds the text limit after merging the latest events", async () => {
+    const record = atTextLimit({ ...makeCase(), goal: "" });
+    await insertCaseWithAttachments(record, []);
+    await expect(
+      saveCase({ ...record, events: [], goal: "x".repeat(5000) }),
+    ).rejects.toThrow("事项文字总量");
+    expect((await getCaseSnapshot(record.id)).record).toEqual(record);
+  });
+
+  it("validates metadata with the final timestamp before writing at the text limit", async () => {
+    const record = atTextLimit({
+      ...makeCase(),
+      updatedAt: "2026-09-26T08:00:00Z",
+    });
+    await insertCaseWithAttachments(record, []);
+    await expect(
+      updateCaseMeta(record.id, { merchant: record.merchant }),
+    ).rejects.toThrow("事项文字总量");
+    expect((await getCaseSnapshot(record.id)).record).toEqual(record);
   });
 
   it("rejects oversize files before reading bytes and leaves the timeline untouched", async () => {

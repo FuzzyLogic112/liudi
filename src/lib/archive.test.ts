@@ -163,6 +163,20 @@ describe("single-case archive roundtrip", () => {
 });
 
 describe("untrusted archive validation", () => {
+  it("rejects externally recompressed archives without creating a case", async () => {
+    const seeded = await seed();
+    const entries = unzipSync(
+      new Uint8Array(await (await exportCase(seeded.id)).arrayBuffer()),
+    );
+    const recompressed = new File(
+      [new Uint8Array(zipSync(entries, { level: 6 }))],
+      "recompressed.zip",
+    );
+    await expect(importCase(recompressed)).rejects.toThrow("原始备份");
+    expect(await listCases()).toHaveLength(1);
+    expect((await getCaseSnapshot(seeded.id)).attachments).toHaveLength(2);
+  });
+
   it("rejects a replaced attachment even if the ZIP CRC is valid, without writing anything", async () => {
     const seeded = await seed();
     const entries = unzipSync(
@@ -269,7 +283,7 @@ describe("untrusted archive validation", () => {
     expect(await listCases()).toHaveLength(1);
   });
 
-  it("rejects a declared decompression bomb before inflating it", () => {
+  it("rejects oversized declared entries before reading their payloads", () => {
     const bytes = new Uint8Array(
       zipSync(
         {
@@ -278,7 +292,7 @@ describe("untrusted archive validation", () => {
           "README.txt": strToU8(""),
           "files/bomb": strToU8("x"),
         },
-        { level: 6 },
+        { level: 0 },
       ),
     );
     const view = new DataView(bytes.buffer);

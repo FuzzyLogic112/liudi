@@ -89,9 +89,15 @@ export async function saveCase(input: CaseRecord): Promise<void> {
   const existing = await transaction.store.get(parsed.id);
   if (!existing && parsed.events.length)
     throw new Error("请通过新增记录或导入备份写入时间线");
-  const record: CaseRecord = existing
-    ? { ...existing, ...metadata(parsed), updatedAt: new Date().toISOString() }
-    : parsed;
+  const record = caseSchema.parse(
+    existing
+      ? {
+          ...existing,
+          ...metadata(parsed),
+          updatedAt: new Date().toISOString(),
+        }
+      : parsed,
+  );
   await Promise.all([transaction.done, transaction.store.put(record)]);
 }
 
@@ -107,15 +113,9 @@ export async function updateCaseMeta(
   const parsed = caseSchema.parse({
     ...existing,
     ...metadata({ ...existing, ...patch }),
+    updatedAt: new Date().toISOString(),
   });
-  await Promise.all([
-    transaction.done,
-    transaction.store.put({
-      ...existing,
-      ...metadata(parsed),
-      updatedAt: new Date().toISOString(),
-    }),
-  ]);
+  await Promise.all([transaction.done, transaction.store.put(parsed)]);
 }
 
 /** Change one checklist item against the current record, including across tabs. */

@@ -42,6 +42,7 @@ import {
   updateCaseMeta,
 } from "./lib/store";
 import { exportCase, importCase } from "./lib/archive";
+import { caseFormChanges } from "./lib/case-form";
 
 const CHECKLIST = ["交易凭证", "问题照片或说明", "沟通记录", "处理结果"];
 const categoryMarks: Record<string, string> = {
@@ -711,7 +712,7 @@ export default function App() {
           >
             开源，让信任有迹可循 <ArrowUpRight size={13} />
           </a>
-          <span className="version">留底 v0.1.1</span>
+          <span className="version">留底 v0.1.2</span>
         </div>
       </aside>
 
@@ -1393,24 +1394,9 @@ export default function App() {
             onSave={(c) =>
               run(async () => {
                 if (modal === "edit") {
-                  const {
-                    title,
-                    category,
-                    merchant,
-                    orderNo,
-                    amount,
-                    goal,
-                    deadline,
-                  } = c;
-                  await updateCaseMeta(c.id, {
-                    title,
-                    category,
-                    merchant,
-                    orderNo,
-                    amount,
-                    goal,
-                    deadline,
-                  });
+                  if (!modalCase)
+                    throw new Error("事项信息已失效，请关闭后重新编辑");
+                  await updateCaseMeta(c.id, caseFormChanges(modalCase, c));
                 } else await saveCase(c);
                 setSearch("");
                 await committed(
