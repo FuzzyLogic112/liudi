@@ -17,6 +17,7 @@ export default defineConfig({
         ];
         const version = createHash("sha256")
           .update(JSON.stringify(assets))
+          .update("static-cache-v2")
           .digest("hex")
           .slice(0, 12);
         this.emitFile({
@@ -30,10 +31,13 @@ self.addEventListener('install', event => event.waitUntil(caches.open(CACHE).the
 self.addEventListener('activate', event => event.waitUntil(caches.keys().then(keys => Promise.all(keys.filter(k => k.startsWith('liudi-') && k !== CACHE).map(k => caches.delete(k)))).then(() => self.clients.claim())));
 self.addEventListener('fetch', event => {
   if (event.request.method !== 'GET' || !event.request.url.startsWith(ROOT.href)) return;
-  event.respondWith(caches.match(event.request).then(cached => cached || fetch(event.request).catch(error => {
-    if (event.request.mode === 'navigate') return caches.match(new URL('index.html', ROOT).href);
+  // These are our precached static files. CORS-mode module/style requests may
+  // send Origin while cache.addAll did not; a server's Vary: Origin must not
+  // turn identical static assets into a cache miss when offline.
+  event.respondWith(caches.open(CACHE).then(cache => cache.match(event.request, { ignoreVary: true }).then(cached => cached || fetch(event.request).catch(error => {
+    if (event.request.mode === 'navigate') return cache.match(new URL('index.html', ROOT).href);
     throw error;
-  })));
+  }))));
 });
 `,
         });

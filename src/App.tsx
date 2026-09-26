@@ -711,7 +711,7 @@ export default function App() {
           >
             开源，让信任有迹可循 <ArrowUpRight size={13} />
           </a>
-          <span className="version">留底 v0.1.0</span>
+          <span className="version">留底 v0.1.1</span>
         </div>
       </aside>
 
