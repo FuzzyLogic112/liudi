@@ -1,3 +1,5 @@
+<img src="public/icon.svg" alt="留底图标" width="64">
+
 # 留底 Liudi
 
 **把凭据留好，心里更有底。**
@@ -7,6 +9,13 @@
 [在线使用](https://fuzzylogic112.github.io/liudi/) · [产品设计](docs/PRODUCT.md) · [需求调研](docs/RESEARCH.md) · [参与贡献](CONTRIBUTING.md)
 
 ![留底工作台，使用虚构示例数据](docs/images/workspace.png)
+
+<details>
+<summary>手机端截图</summary>
+
+<img src="docs/images/mobile.png" alt="留底手机端界面，使用虚构示例数据" width="320">
+
+</details>
 
 ## 为什么做
 
@@ -27,6 +36,8 @@
 不需要后端、账号或模型 API。应用没有埋点、广告、远程字体和第三方运行时资源请求。访问托管网站本身仍会向托管方请求静态文件。
 
 ## 三分钟上手
+
+![首次打开的欢迎页，可选择体验示例或新建事项](docs/images/welcome.png)
 
 1. 打开 [在线版](https://fuzzylogic112.github.io/liudi/)，选择“先体验示例”，或新建自己的事项。
 2. 每次购买、联系商家、寄件或收到回复后，添加一条进展和相关材料。
